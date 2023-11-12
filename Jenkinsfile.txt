@@ -1,26 +1,21 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18.18.2-alpine3.18' 
-            args '-p 3000:3000' 
-        }
-    }
-    stages {
-        stage('Checkout SCM') { 
-            steps {
-                echo 'Checking out SCM'
-            }
-        }
-	stage('OWASP Dependency-Check Vulnerabilities') {
-      		steps {
-        		dependencyCheck additionalArguments: ''' 
-                    	-o './'
-                    	-s './'
-                    	-f 'ALL' 
-                    	--prettyPrint''', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
-        
-        		dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-      		}
-    	}
-    }
+	agent any
+	stages {
+		stage('Checkout SCM') {
+			steps {
+				git '/home/JenkinsDependencyCheckTest'
+			}
+		}
+
+		stage('OWASP DependencyCheck') {
+			steps {
+				dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'Default'
+			}
+		}
+	}	
+	post {
+		success {
+			dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+		}
+	}
 }
